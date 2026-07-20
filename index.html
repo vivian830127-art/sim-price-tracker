@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>世界移動|PChome 售價戰情板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#152436; --bg:#F4F5F2; --card:#FFF;
+    --gold:#B8860B; --gold-soft:#F6EED9;
+    --red:#C1352A; --red-soft:#FBEAE8;
+    --blue:#1E5FA8; --blue-soft:#E8F0FA;
+    --green:#2C7A57; --green-soft:#E6F2EC;
+    --mute:#7C8794; --line:#E3E5E0;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans TC',sans-serif;color:var(--ink);background:var(--bg);padding:0 14px 60px}
+  .wrap{max-width:1360px;margin:0 auto}
+  header{padding:30px 0 18px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;justify-content:space-between}
+  .brand small{display:block;font-size:11px;letter-spacing:.35em;color:var(--gold);font-weight:700;margin-bottom:5px}
+  .brand h1{font-size:26px;font-weight:900;letter-spacing:.04em}
+  .updated{font-family:var(--mono);font-size:12px;color:var(--mute)}
+  .updated b{color:var(--ink)}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:12px;color:var(--mute);margin-bottom:4px}
+  .stat .v{font-family:var(--mono);font-size:22px;font-weight:600}
+  .stat.warn .v{color:var(--red)}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center}
+  .chip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 14px;font-size:13px;cursor:pointer;font-weight:500}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .legend{margin-left:auto;font-size:12px;color:var(--mute)}
+  .legend .up{color:var(--red);font-weight:700}
+  .legend .down{color:var(--blue);font-weight:700}
+
+  .tblwrap{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:72vh}
+  table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;white-space:nowrap}
+  thead th{position:sticky;top:0;background:var(--ink);color:#fff;font-weight:500;font-size:12px;padding:9px 10px;text-align:right;z-index:3}
+  thead th:first-child,tbody td:first-child{text-align:left;position:sticky;left:0;z-index:4}
+  thead th:first-child{z-index:5}
+  tbody td:first-child{background:var(--card);border-right:1px solid var(--line);font-weight:700;max-width:220px;white-space:normal}
+  tbody td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-weight:500}
+  tbody td.t{font-family:'Noto Sans TC',sans-serif;text-align:left}
+  tbody tr:hover td{background:#FBFAF6}
+  tbody tr:hover td:first-child{background:#FBFAF6}
+  tr.grp td{background:var(--gold-soft)!important;color:var(--ink);font-family:'Noto Sans TC',sans-serif;font-weight:900;letter-spacing:.15em;font-size:12px;text-align:left;position:sticky;left:0}
+  .up{color:var(--red);font-weight:600}
+  .down{color:var(--blue);font-weight:600}
+  .neg{color:var(--red)}
+  .diff{font-size:11px;margin-left:4px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;font-family:'Noto Sans TC',sans-serif;padding:1px 8px;border-radius:99px}
+  .badge.red{background:var(--red-soft);color:var(--red)}
+  .badge.blue{background:var(--blue-soft);color:var(--blue)}
+  .badge.gray{background:var(--bg);color:var(--mute)}
+  td a{color:var(--gold);text-decoration:none;font-family:'Noto Sans TC',sans-serif}
+  td a:hover{text-decoration:underline}
+  .sub{display:block;font-size:11px;color:var(--mute);font-weight:400;margin-top:2px;white-space:normal}
+  .empty{font-size:13px;color:var(--mute);padding:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <small>WORLD MOBILE 世界移動</small>
+      <h1>PChome 售價戰情板</h1>
+    </div>
+    <div class="updated">最後更新 <b id="updated">—</b></div>
+  </header>
+
+  <section class="stats" id="stats" aria-label="總覽"></section>
+
+  <div class="toolbar" id="filters" role="group" aria-label="國家篩選"></div>
+
+  <div class="tblwrap">
+    <table id="tbl" aria-label="售價與成本明細">
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <p class="empty" id="err" style="display:none">
+    讀取資料失敗。請透過 GitHub Pages 網址開啟,或在本機執行 <code>python -m http.server</code> 後瀏覽。
+  </p>
+</div>
+
+<script>
+const HEADERS = ['標籤產品名稱','商品ID','料號','加值方案','APN標籤','天數','國家','用量',
+  '參考連結','平台','浮動報價','即時售價','單件成本','售價','商品數量','總成本價',
+  '平台進價','平台後扣','物流空卡費','銷售成本','單件毛利','總毛利','單品利潤','總利潤','網路類型','前毛(可動)','報價來源'];
+let DATA = null, FILTER = '全部';
+const $ = s => document.querySelector(s);
+const money = n => n==null||n===''?'—':Number(n).toLocaleString('zh-Hant-TW',{maximumFractionDigits:2});
+const pct = n => n==null?'—':(n*100).toFixed(1)+'%';
+
+async function load(){
+  try{
+    DATA = await (await fetch('data/latest.json?_='+Date.now())).json();
+    render();
+  }catch(e){ $('#err').style.display='block'; }
+}
+
+function trendCell(val, trend, prev){
+  if(val==null) return '<span class="badge gray">未取得</span>';
+  const cls = trend>0?'up':(trend<0?'down':'');
+  const arrow = trend>0?'▲':(trend<0?'▼':'');
+  const d = prev!=null&&trend!==0?`<span class="diff ${cls}">${arrow}${money(Math.abs(val-prev))}</span>`:'';
+  return `<span class="${cls}">${money(val)}</span>${d}`;
+}
+
+function render(){
+  $('#updated').textContent = DATA.updated_at;
+  const all = DATA.products;
+  const countries = ['全部', ...new Set(all.map(p=>p['國家']))];
+  $('#filters').innerHTML = countries.map(c=>
+    `<button class="chip ${c===FILTER?'on':''}" onclick="FILTER='${c}';render()">${c}</button>`).join('')
+    + `<span class="legend">浮動報價/即時售價:<span class="up">▲ 紅漲</span>・<span class="down">▼ 藍降</span></span>`;
+
+  const ps = FILTER==='全部'?all:all.filter(p=>p['國家']===FILTER);
+
+  const live = ps.filter(p=>p['即時售價']!=null);
+  const priceMoves = ps.filter(p=>p['售價趨勢']!==0).length;
+  const quoteUp = ps.filter(p=>p['報價趨勢']>0).length;
+  const totalProfit = ps.reduce((a,p)=>a+(p['總利潤']||0),0);
+  const lossItems = ps.filter(p=>(p['單品利潤']||0)<0).length;
+  $('#stats').innerHTML = `
+    <div class="stat"><div class="k">品項數</div><div class="v">${ps.length}</div></div>
+    <div class="stat"><div class="k">即時售價取得</div><div class="v">${live.length}/${ps.length}</div></div>
+    <div class="stat ${priceMoves?'warn':''}"><div class="k">今日售價異動</div><div class="v">${priceMoves}</div></div>
+    <div class="stat ${quoteUp?'warn':''}"><div class="k">報價上漲品項</div><div class="v">${quoteUp}</div></div>
+    <div class="stat ${lossItems?'warn':''}"><div class="k">虧損品項</div><div class="v">${lossItems}</div></div>
+    <div class="stat"><div class="k">總利潤合計</div><div class="v">NT$${money(Math.round(totalProfit))}</div></div>`;
+
+  $('#thead').innerHTML = HEADERS.map(h=>`<th>${h}</th>`).join('');
+
+  let html = '', lastCountry = null;
+  for(const p of ps){
+    if(FILTER==='全部' && p['國家']!==lastCountry){
+      lastCountry = p['國家'];
+      html += `<tr class="grp"><td colspan="${HEADERS.length}">${lastCountry}</td></tr>`;
+    }
+    const link = p['參考連結']
+      ? `<a href="${p['參考連結']}" target="_blank" rel="noopener">商品頁 ↗</a>`
+      : (p['參考說明']?`<span class="sub">${p['參考說明']}</span>`:'—');
+    const profitCls = (p['單品利潤']||0)<0?' class="neg"':'';
+    html += `<tr>
+      <td>${p['標籤產品名稱']}${p['用量']?`<span class="sub">${p['用量']}・${p['網路類型']}</span>`:''}</td>
+      <td>${p['商品ID']||'—'}</td>
+      <td>${p['料號']||'—'}</td>
+      <td class="t">${(p['加值方案']||'—').split('\n')[0]}</td>
+      <td class="t">${(p['APN標籤']||'—').split('\n')[0]}</td>
+      <td>${p['天數']}</td>
+      <td class="t">${p['國家']}</td>
+      <td class="t">${p['用量']||'—'}</td>
+      <td class="t">${link}</td>
+      <td class="t">${p['平台']}</td>
+      <td>${trendCell(p['浮動報價'], p['報價趨勢'], p['前次浮動報價'])}</td>
+      <td>${trendCell(p['即時售價'], p['售價趨勢'], p['前次即時售價'])}</td>
+      <td>${money(p['單件成本'])}</td>
+      <td>${money(p['售價'])}</td>
+      <td>${money(p['商品數量'])}</td>
+      <td>${money(p['總成本價'])}</td>
+      <td>${p['平台進價']==null?'X':money(p['平台進價'])}</td>
+      <td>${pct(p['平台後扣'])}</td>
+      <td>${money(p['物流空卡費'])}</td>
+      <td>${money(p['銷售成本'])}</td>
+      <td>${money(p['單件毛利'])}</td>
+      <td>${money(p['總毛利'])}</td>
+      <td${profitCls}>${money(p['單品利潤'])}</td>
+      <td${profitCls}>${money(p['總利潤'])}</td>
+      <td class="t">${p['網路類型']||'—'}</td>
+      <td>${pct(p['平台前毛'])}</td>
+      <td class="t">${p['報價來源']||'Excel'}</td>
+    </tr>`;
+  }
+  $('#tbody').innerHTML = html || `<tr><td colspan="${HEADERS.length}" class="empty">沒有資料</td></tr>`;
+}
+load();
+</script>
+</body>
+</html>
