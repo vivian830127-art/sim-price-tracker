@@ -6,7 +6,7 @@ concurrency:
 
 on:
   schedule:
-    - cron: "0 2 * * *"
+    - cron: "0 2 * * *"   # 每天 UTC 02:00 = 台北時間 10:00
   workflow_dispatch:
   push:
     paths:
